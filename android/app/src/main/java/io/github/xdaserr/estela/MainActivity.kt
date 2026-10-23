@@ -83,8 +83,23 @@ class MainActivity : Activity() {
         return Regex("https?://\\S+").find(texto)?.value
     }
 
+    override fun onResume() {
+        super.onResume()
+        enPantalla = true
+    }
+
+    override fun onPause() {
+        enPantalla = false
+        super.onPause()
+    }
+
     override fun onDestroy() {
         webView.destroy()
         super.onDestroy()
+    }
+
+    companion object {
+        /** Si Estela está a la vista; si no, el final de una descarga se avisa con una notificación. */
+        @Volatile var enPantalla = false
     }
 }

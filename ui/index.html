@@ -479,13 +479,15 @@
         color: var(--muted);
       }
 
-      /* Teléfono (versión Android): una columna con Hoshi arriba en compacto */
-      @media (max-width: 700px) {
+      /* Teléfono y tablet (versión Android): una columna con Hoshi arriba en compacto.
+         La ventana de escritorio nunca baja de 820 px, así que allí no se aplica. */
+      @media (max-width: 819px) {
         body {
           overflow-y: auto;
         }
         .app {
-          grid-template-columns: 1fr;
+          /* minmax(0, …): que el contenido no ensanche la página con la letra grande del sistema */
+          grid-template-columns: minmax(0, 1fr);
           gap: 12px;
           align-content: start;
           height: auto;
@@ -539,8 +541,20 @@
         .thumb {
           width: 100%;
         }
+        .formats {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 8px;
+        }
         .fmt {
-          padding: 10px 6px;
+          min-width: 0;
+          padding: 10px 4px;
+          overflow-wrap: anywhere;
+        }
+        .fmt .ic {
+          font-size: 20px;
+        }
+        .fmt .nm {
+          font-size: 14px;
         }
         .fmt .ds {
           font-size: 11px;

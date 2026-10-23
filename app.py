@@ -52,6 +52,36 @@ def base_opts():
     return opts
 
 
+MENSAJE_BOT = (
+    "YouTube pidió confirmar que no eres un bot 🤖. "
+    "Espera un rato o cambia de red y vuelve a intentarlo."
+)
+_solo_ipv4 = False
+
+
+def es_bloqueo_bot(error):
+    return "not a bot" in str(error)
+
+
+def texto_error(error):
+    return MENSAJE_BOT if es_bloqueo_bot(error) else str(error).replace("ERROR: ", "")
+
+
+def con_ipv4_si_hace_falta(accion):
+    """YouTube a veces bloquea la conexión IPv6 con "confirma que no eres un bot": se reintenta por IPv4."""
+    global _solo_ipv4
+    if _solo_ipv4:
+        return accion({"source_address": "0.0.0.0"})
+    try:
+        return accion({})
+    except Exception as e:
+        if not es_bloqueo_bot(e):
+            raise
+        resultado = accion({"source_address": "0.0.0.0"})
+        _solo_ipv4 = True
+        return resultado
+
+
 def ensure_ffmpeg():
     """Copia el ffmpeg de imageio-ffmpeg como bin/ffmpeg.exe para que yt-dlp lo reconozca."""
     target = BIN_DIR / "ffmpeg.exe"
@@ -85,12 +115,14 @@ class Api:
         os.startfile(self._folder)
 
     def get_info(self, url):
-        opts = {**base_opts(), "skip_download": True}
+        def extraer(extra):
+            with yt_dlp.YoutubeDL({**base_opts(), "skip_download": True, **extra}) as ydl:
+                return ydl.extract_info(url, download=False)
+
         try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                info = ydl.extract_info(url, download=False)
+            info = con_ipv4_si_hace_falta(extraer)
         except Exception as e:
-            return {"ok": False, "error": str(e).replace("ERROR: ", "")}
+            return {"ok": False, "error": texto_error(e)}
         return {
             "ok": True,
             "title": info.get("title"),
@@ -130,12 +162,15 @@ class Api:
             "progress_hooks": [hook],
             **FORMATS[kind],
         }
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
+        def descargar(extra):
+            with yt_dlp.YoutubeDL({**opts, **extra}) as ydl:
                 ydl.download([url])
+
+        try:
+            con_ipv4_si_hace_falta(descargar)
             self._emit("done", {"folder": str(self._folder)})
         except Exception as e:
-            self._emit("error", {"error": str(e).replace("ERROR: ", "")})
+            self._emit("error", {"error": texto_error(e)})
         finally:
             self._busy = False
 

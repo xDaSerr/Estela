@@ -19,8 +19,8 @@ android {
         applicationId = "io.github.xdaserr.estela"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.3"
+        versionCode = 2
+        versionName = "1.0.4"
     }
 
     // Un APK por tipo de procesador (más ligeros) y uno universal que sirve en todos

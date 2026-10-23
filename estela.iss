@@ -1,6 +1,6 @@
 ; Instalador de Estela (Inno Setup). Se compila con crear_instalador.bat
 #define MyAppName "Estela"
-#define MyAppVersion "1.0.2"
+#define MyAppVersion "1.0.4"
 #define MyAppExe "Estela.exe"
 
 [Setup]

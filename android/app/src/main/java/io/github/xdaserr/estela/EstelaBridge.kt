@@ -1,13 +1,16 @@
 package io.github.xdaserr.estela
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.ActivityNotFoundException
 import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Environment
 import android.provider.MediaStore
 import android.system.Os
 import android.system.OsConstants
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.yausername.youtubedl_android.YoutubeDL
@@ -26,6 +29,7 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
     private val executor = Executors.newCachedThreadPool()
     private val motor = ReentrantReadWriteLock()
     @Volatile private var busy = false
+    @Volatile private var soloIpv4 = false
 
     @JavascriptInterface
     fun call(id: Int, method: String, argsJson: String) {
@@ -70,10 +74,24 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
         return JSONObject.NULL
     }
 
+    /** YouTube a veces bloquea la conexión IPv6 con "confirma que no eres un bot": se reintenta por IPv4. */
+    private fun <T> conIpv4SiHaceFalta(accion: (ipv4: Boolean) -> T): T {
+        if (soloIpv4) return accion(true)
+        return try {
+            accion(false)
+        } catch (e: Throwable) {
+            if (!esBloqueoBot(e)) throw e
+            accion(true).also { soloIpv4 = true }
+        }
+    }
+
     private fun getInfo(url: String): JSONObject {
         EstelaApp.esperarMotor()
-        val request = YoutubeDLRequest(url).addOption("--no-playlist")
-        val info = motor.read { YoutubeDL.getInstance().getInfo(request) }
+        val info = conIpv4SiHaceFalta { ipv4 ->
+            val request = YoutubeDLRequest(url).addOption("--no-playlist")
+            if (ipv4) request.addOption("--force-ipv4")
+            motor.read { YoutubeDL.getInstance().getInfo(request) }
+        }
         return JSONObject()
             .put("ok", true)
             .put("title", info.title)
@@ -87,6 +105,10 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
     private fun download(url: String, kind: String): JSONObject {
         if (busy) return JSONObject().put("ok", false).put("error", "Ya hay una descarga en curso")
         busy = true
+        // Para avisar cuando termine si la app está en segundo plano (Android 13+ pide permiso)
+        if (activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            activity.runOnUiThread { activity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1) }
+        }
         executor.execute { runDownload(url, kind) }
         return JSONObject().put("ok", true)
     }
@@ -94,13 +116,60 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
     private fun runDownload(url: String, kind: String) {
         // yt-dlp descarga en la caché de la app y luego se copia a Descargas/Estela
         val temp = File(activity.cacheDir, "descargas/${System.currentTimeMillis()}").apply { mkdirs() }
+        DescargaService.iniciar(activity)
         try {
             EstelaApp.esperarMotor()
-            val request = YoutubeDLRequest(url)
-                .addOption("--no-playlist")
-                .addOption("--no-mtime")
-                .addOption("-o", "${temp.absolutePath}/%(title)s.%(ext)s")
-            if (PAGINAS_16K) {
+            var procesando = false
+            var ultimo = -1
+            conIpv4SiHaceFalta { ipv4 ->
+                val request = crearPeticion(url, kind, temp, ipv4)
+                motor.read {
+                    YoutubeDL.getInstance().execute(request, PROCESS_ID) { progress, eta, line ->
+                        if (POSTPROCESO.containsMatchIn(line)) {
+                            if (!procesando) emit("processing")
+                            procesando = true
+                        } else if (!procesando && progress >= 0) {
+                            if (progress.toInt() != ultimo) {
+                                ultimo = progress.toInt()
+                                DescargaService.progreso(activity, ultimo)
+                            }
+                            emit(
+                                "progress",
+                                JSONObject()
+                                    .put("percent", Math.round(progress * 10) / 10.0)
+                                    .put("speed", VELOCIDAD.find(line)?.groupValues?.get(1) ?: "")
+                                    .put("eta", if (eta > 0) formatDuration(eta.toInt()) else ""),
+                            )
+                        }
+                    }
+                }
+            }
+
+            val archivos = temp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }.orEmpty()
+            archivos.forEach(::guardarEnDescargas)
+            emit("done", JSONObject().put("folder", CARPETA))
+            if (!MainActivity.enPantalla) {
+                DescargaService.avisar(activity, "✨ Descarga lista", "${archivos.joinToString { it.name }} se guardó en $CARPETA")
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Falló la descarga de $url ($kind)", e)
+            val mensaje = limpiarError(e)
+            emit("error", JSONObject().put("error", mensaje))
+            if (!MainActivity.enPantalla) DescargaService.avisar(activity, "No se pudo descargar", mensaje)
+        } finally {
+            DescargaService.detener(activity)
+            temp.deleteRecursively()
+            busy = false
+        }
+    }
+
+    private fun crearPeticion(url: String, kind: String, temp: File, ipv4: Boolean): YoutubeDLRequest {
+        val request = YoutubeDLRequest(url)
+            .addOption("--no-playlist")
+            .addOption("--no-mtime")
+            .addOption("-o", "${temp.absolutePath}/%(title)s.%(ext)s")
+        if (ipv4) request.addOption("--force-ipv4")
+        if (PAGINAS_16K) {
                 // El FFmpeg de youtubedl-android no carga con páginas de 16 KB:
                 // se eligen formatos que vienen en un solo archivo y no hay que convertir
                 when (kind) {
@@ -121,33 +190,7 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
                     .addOption("--audio-format", "mp3")
                     .addOption("--audio-quality", "192K")
             }
-
-            var procesando = false
-            motor.read {
-                YoutubeDL.getInstance().execute(request, PROCESS_ID) { progress, eta, line ->
-                    if (POSTPROCESO.containsMatchIn(line)) {
-                        if (!procesando) emit("processing")
-                        procesando = true
-                    } else if (!procesando && progress >= 0) {
-                        emit(
-                            "progress",
-                            JSONObject()
-                                .put("percent", Math.round(progress * 10) / 10.0)
-                                .put("speed", VELOCIDAD.find(line)?.groupValues?.get(1) ?: "")
-                                .put("eta", if (eta > 0) formatDuration(eta.toInt()) else ""),
-                        )
-                    }
-                }
-            }
-
-            temp.listFiles()?.filter { it.isFile && !it.name.endsWith(".part") }?.forEach(::guardarEnDescargas)
-            emit("done", JSONObject().put("folder", CARPETA))
-        } catch (e: Throwable) {
-            emit("error", JSONObject().put("error", limpiarError(e)))
-        } finally {
-            temp.deleteRecursively()
-            busy = false
-        }
+        return request
     }
 
     /** Copia el archivo a Descargas/Estela mediante MediaStore (no necesita permisos de almacenamiento). */
@@ -180,21 +223,27 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
         }
     }
 
+    private fun esBloqueoBot(e: Throwable) = e.message?.contains("not a bot") == true
+
     private fun limpiarError(e: Throwable): String {
+        if (esBloqueoBot(e)) return MENSAJE_BOT
         val texto = e.message ?: e.javaClass.simpleName
         // yt-dlp escribe varias líneas; la útil es la que empieza por ERROR:
         // o, si Python falló, la última del traceback (la que dice la causa)
         val lineas = texto.lines().filter { it.isNotBlank() }
-        val linea = lineas.lastOrNull { it.startsWith("ERROR:") } ?: lineas.lastOrNull() ?: texto
+        val linea = lineas.lastOrNull { it.startsWith("ERROR:") } ?: lineas.lastOrNull() ?: e.javaClass.simpleName
         return linea.removePrefix("ERROR:").trim()
     }
 
     companion object {
+        private const val TAG = "Estela"
         private const val CARPETA = "Descargas/Estela"
         private const val PROCESS_ID = "descarga"
         private val POSTPROCESO = Regex("\\[(Merger|ExtractAudio|VideoConvertor|FixupM4a)]")
         private val VELOCIDAD = Regex("at\\s+(\\S+/s)")
         private val PAGINAS_16K = Os.sysconf(OsConstants._SC_PAGESIZE) > 4096
+        private const val MENSAJE_BOT =
+            "YouTube pidió confirmar que no eres un bot 🤖. Espera un rato o cambia de red (por ejemplo, a datos móviles) y vuelve a intentarlo."
 
         private fun formatDuration(segundos: Int): String {
             if (segundos <= 0) return ""
