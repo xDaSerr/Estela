@@ -24,6 +24,17 @@
 
 Requisitos: Windows 10 u 11 de 64 bits.
 
+### Android
+
+1. En [Releases](https://github.com/xDaSerr/Estela/releases/latest) descarga `Estela-x.x.x-android.apk`
+   (si tu teléfono es antiguo y no se instala, prueba con `-android-32bits.apk` o `-android-universal.apk`).
+2. Ábrelo y acepta **instalar apps de origen desconocido** cuando Android lo pida.
+3. Para descargar desde la app de YouTube: *Compartir → Estela*.
+
+Los archivos se guardan en **Descargas/Estela**. Requiere Android 10 o superior.
+En los teléfonos más nuevos con páginas de memoria de 16 KB, Estela descarga formatos que no necesitan
+FFmpeg (video MP4 en un solo archivo y audio M4A), porque la versión de FFmpeg incluida aún no es compatible.
+
 ## Funciones
 
 - 🎬 Video en la mejor calidad (MP4), 📺 720p o 🎧 solo audio (MP3).
@@ -58,6 +69,11 @@ python app.py
 
 **Crear el instalador:** instala [Inno Setup 6](https://jrsoftware.org/isinfo.php), sube la versión en
 `estela.iss` (`MyAppVersion`) y ejecuta `crear_instalador.bat`. El resultado queda en `Instalador/`.
+
+**Android** (`android/`): app en Kotlin que muestra la misma `ui/index.html` en un WebView y descarga con
+[youtubedl-android](https://github.com/yausername/youtubedl-android). Ábrela con Android Studio o compila con
+`gradlew.bat assembleRelease` dentro de `android/`. La firma se lee de `~/.estela/firma.properties`
+(fuera del repositorio).
 
 ## Créditos
 

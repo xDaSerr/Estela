@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Estela</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
@@ -477,6 +478,77 @@
         font-size: 13px;
         color: var(--muted);
       }
+
+      /* Teléfono (versión Android): una columna con Hoshi arriba en compacto */
+      @media (max-width: 700px) {
+        body {
+          overflow-y: auto;
+        }
+        .app {
+          grid-template-columns: 1fr;
+          gap: 12px;
+          align-content: start;
+          height: auto;
+          min-height: 100%;
+          padding: 16px;
+        }
+        .side {
+          order: -1;
+          flex-direction: row-reverse;
+          align-items: flex-end;
+          justify-content: flex-end;
+          gap: 8px;
+        }
+        .mascot {
+          width: 96px;
+          flex-shrink: 0;
+        }
+        .name {
+          display: none;
+        }
+        .bubble {
+          flex: 1;
+          max-width: none;
+          margin-bottom: 18px;
+          font-size: 13px;
+          text-align: left;
+        }
+        .bubble::after {
+          left: -10px;
+          bottom: 14px;
+          transform: none;
+          border: 10px solid transparent;
+          border-right-color: #fff;
+          border-left: 0;
+        }
+        header {
+          margin-bottom: 12px;
+        }
+        .logo {
+          font-size: 28px;
+        }
+        .card {
+          padding: 16px;
+        }
+        .row {
+          flex-direction: column;
+        }
+        .preview.show {
+          flex-direction: column;
+        }
+        .thumb {
+          width: 100%;
+        }
+        .fmt {
+          padding: 10px 6px;
+        }
+        .fmt .ds {
+          font-size: 11px;
+        }
+        .folder span {
+          white-space: normal;
+        }
+      }
     </style>
   </head>
   <body>
@@ -878,7 +950,7 @@
           installed: " · JS instalado ✓",
           updated: " · JS actualizado ✓",
           missing: " · JS pendiente",
-        }[r.deno];
+        }[r.deno] ?? "";
         if (r.status === "reinstall") {
           m.textContent = `⚙️ Motor de descargas: v${r.version}${denoText} · hay una versión nueva de Estela`;
           say(

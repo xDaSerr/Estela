@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="fondo">#1A1033</color>
+
+    <style name="Theme.Estela" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@color/fondo</item>
+        <item name="android:statusBarColor">@color/fondo</item>
+        <item name="android:navigationBarColor">@color/fondo</item>
+    </style>
+</resources>
