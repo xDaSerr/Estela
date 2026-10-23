@@ -178,11 +178,12 @@ class EstelaBridge(private val activity: MainActivity, private val webView: WebV
                     "audio" -> request.addOption("-f", "ba[ext=m4a]/ba")
                 }
             } else when (kind) {
+                // Video en H.264 (avc1), que se reproduce en cualquier dispositivo; si no lo hay, lo mejor disponible
                 "video" -> request
-                    .addOption("-f", "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b")
+                    .addOption("-f", "bv*[vcodec^=avc1]+ba[ext=m4a]/b[vcodec^=avc1]/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b")
                     .addOption("--merge-output-format", "mp4")
                 "video720" -> request
-                    .addOption("-f", "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b[height<=720]")
+                    .addOption("-f", "bv*[vcodec^=avc1][height<=720]+ba[ext=m4a]/b[vcodec^=avc1][height<=720]/bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b[height<=720]")
                     .addOption("--merge-output-format", "mp4")
                 "audio" -> request
                     .addOption("-f", "ba/b")

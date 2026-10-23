@@ -25,13 +25,16 @@ BIN_DIR = BASE_DIR / "bin"
 DEFAULT_DIR = Path.home() / "Downloads" / "Estela"
 ICON = str(BASE_DIR / "icon.ico")
 
+# Video en H.264 (avc1): se reproduce en cualquier dispositivo, a diferencia de AV1/VP9.
+# Si un video no lo ofrece, se usa lo mejor disponible.
 FORMATS = {
     "video": {
-        "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
+        "format": "bv*[vcodec^=avc1]+ba[ext=m4a]/b[vcodec^=avc1]/bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/bv*+ba/b",
         "merge_output_format": "mp4",
     },
     "video720": {
-        "format": "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b[height<=720]",
+        "format": "bv*[vcodec^=avc1][height<=720]+ba[ext=m4a]/b[vcodec^=avc1][height<=720]"
+                  "/bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720][ext=mp4]/bv*[height<=720]+ba/b[height<=720]",
         "merge_output_format": "mp4",
     },
     "audio": {
