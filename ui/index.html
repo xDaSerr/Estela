@@ -480,8 +480,9 @@
       }
 
       /* Teléfono y tablet (versión Android): una columna con Hoshi arriba en compacto.
-         La ventana de escritorio nunca baja de 820 px, así que allí no se aplica. */
-      @media (max-width: 819px) {
+         Se decide por pantalla táctil, no por ancho: en escritorio (ratón) nunca se aplica,
+         y un teléfono grande en horizontal la sigue usando. 700 px queda como respaldo. */
+      @media (max-width: 700px), (pointer: coarse) {
         body {
           overflow-y: auto;
         }
