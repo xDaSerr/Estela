@@ -63,3 +63,13 @@ python app.py
 
 Hecho con [yt-dlp](https://github.com/yt-dlp/yt-dlp), [pywebview](https://pywebview.flowrl.com/),
 [FFmpeg](https://ffmpeg.org/) y [Deno](https://deno.com/).
+
+## Licencia
+
+El código de Estela se distribuye bajo la licencia [MIT](LICENSE).
+
+El instalador incluye un ejecutable de [FFmpeg](https://ffmpeg.org/) (obtenido de
+[imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg)), que se distribuye bajo la licencia
+[GPL](https://ffmpeg.org/legal.html) y se ejecuta como programa independiente. Su código fuente
+está disponible en [ffmpeg.org](https://ffmpeg.org/download.html). Deno se descarga desde su fuente
+oficial al usar la app y tiene licencia [MIT](https://github.com/denoland/deno/blob/main/LICENSE.md).
