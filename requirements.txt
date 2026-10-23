@@ -1,0 +1,5 @@
+yt-dlp[default]
+pywebview
+imageio-ffmpeg
+packaging
+pyinstaller

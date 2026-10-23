@@ -1,0 +1,11 @@
+# Archivos generados al compilar
+build/
+Instalador/
+Estela.exe
+*.spec
+
+# ffmpeg se prepara solo al compilar (build.py)
+bin/
+
+__pycache__/
+*.pyc

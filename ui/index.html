@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Estela</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg1: #1a1033;
+        --bg2: #3b1f5c;
+        --pink: #ff8fc7;
+        --pink-strong: #ff5fae;
+        --lilac: #b79cff;
+        --cyan: #7fe7ff;
+        --text: #fdf4ff;
+        --muted: #cbb8e6;
+        --glass: rgba(255, 255, 255, 0.08);
+        --glass-border: rgba(255, 255, 255, 0.18);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        font-family: "M PLUS Rounded 1c", "Segoe UI", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 80% 10%, #5a2a7a 0%, transparent 45%),
+          radial-gradient(circle at 10% 90%, #2a3d7a 0%, transparent 45%),
+          linear-gradient(160deg, var(--bg1), var(--bg2));
+        overflow: hidden;
+        user-select: none;
+      }
+
+      /* Estrellas y pétalos */
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+      .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: #fff;
+        border-radius: 50%;
+        animation: twinkle 3s ease-in-out infinite;
+      }
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0.2;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      .petal {
+        position: fixed;
+        top: -30px;
+        width: 14px;
+        height: 10px;
+        pointer-events: none;
+        background: linear-gradient(135deg, #ffd1e8, var(--pink));
+        border-radius: 14px 1px 14px 1px;
+        opacity: 0.85;
+        animation: fall linear forwards;
+      }
+      @keyframes fall {
+        to {
+          transform: translate(var(--drift), 110vh) rotate(var(--spin));
+          opacity: 0.2;
+        }
+      }
+
+      .app {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+        height: 100%;
+        padding: 28px 32px;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .app-icon {
+        width: 44px;
+        height: 44px;
+        filter: drop-shadow(0 4px 12px rgba(255, 95, 174, 0.4));
+      }
+      .logo {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        background: linear-gradient(
+          90deg,
+          var(--pink),
+          var(--lilac),
+          var(--cyan)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .jp {
+        font-size: 14px;
+        color: var(--muted);
+        padding: 3px 10px;
+        border: 1px solid var(--glass-border);
+        border-radius: 999px;
+      }
+
+      .card {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 22px;
+        padding: 22px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+      input[type="text"] {
+        flex: 1;
+        padding: 14px 18px;
+        border-radius: 14px;
+        border: 2px solid transparent;
+        background: rgba(0, 0, 0, 0.3);
+        color: var(--text);
+        font: inherit;
+        font-size: 15px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      input[type="text"]:focus {
+        border-color: var(--pink);
+      }
+      input::placeholder {
+        color: #9d88bf;
+      }
+
+      button {
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        border-radius: 14px;
+        padding: 12px 20px;
+        color: #2a0f3d;
+        background: linear-gradient(135deg, var(--pink), var(--lilac));
+        box-shadow: 0 4px 16px rgba(255, 95, 174, 0.35);
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s,
+          opacity 0.15s;
+      }
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 22px rgba(255, 95, 174, 0.5);
+      }
+      button:active:not(:disabled) {
+        transform: translateY(0) scale(0.98);
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button.ghost {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text);
+        box-shadow: none;
+        border: 1px solid var(--glass-border);
+      }
+
+      .preview {
+        display: none;
+        gap: 18px;
+        margin-top: 20px;
+        animation: pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+      }
+      .preview.show {
+        display: flex;
+      }
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: scale(0.96) translateY(8px);
+        }
+      }
+      .thumb {
+        width: 240px;
+        aspect-ratio: 16/9;
+        border-radius: 14px;
+        object-fit: cover;
+        background: #0005;
+        flex-shrink: 0;
+        border: 2px solid var(--glass-border);
+      }
+      .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+      }
+      .title {
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .badge {
+        align-self: flex-start;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        margin-top: 4px;
+      }
+      .badge.cc {
+        background: #3ddc9733;
+        color: #7dffc4;
+        border: 1px solid #7dffc466;
+      }
+      .badge.std {
+        background: #ffb34733;
+        color: #ffd38a;
+        border: 1px solid #ffd38a66;
+      }
+
+      .formats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .fmt {
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 2px solid transparent;
+        cursor: pointer;
+        text-align: center;
+        transition:
+          border-color 0.2s,
+          background 0.2s,
+          transform 0.15s;
+      }
+      .fmt:hover {
+        transform: translateY(-2px);
+      }
+      .fmt.active {
+        border-color: var(--pink);
+        background: rgba(255, 143, 199, 0.14);
+      }
+      .fmt .ic {
+        font-size: 24px;
+      }
+      .fmt .nm {
+        font-weight: 800;
+        margin-top: 4px;
+      }
+      .fmt .ds {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .folder {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .folder span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .folder button {
+        padding: 8px 14px;
+        font-size: 13px;
+      }
+
+      .dl-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .dl-row #downloadBtn {
+        flex: 1;
+        font-size: 17px;
+        padding: 15px;
+      }
+
+      .progress {
+        margin-top: 16px;
+        display: none;
+      }
+      .progress.show {
+        display: block;
+      }
+      .bar {
+        height: 14px;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+        position: relative;
+      }
+      .fill {
+        height: 100%;
+        width: 0;
+        border-radius: 999px;
+        transition: width 0.3s;
+        background: linear-gradient(
+          90deg,
+          var(--pink),
+          var(--lilac),
+          var(--cyan)
+        );
+        background-size: 200% 100%;
+        animation: shimmer 2s linear infinite;
+      }
+      .fill.indeterminate {
+        width: 35% !important;
+        animation:
+          slide 1.2s ease-in-out infinite,
+          shimmer 2s linear infinite;
+      }
+      @keyframes shimmer {
+        to {
+          background-position: -200% 0;
+        }
+      }
+      @keyframes slide {
+        0% {
+          margin-left: -35%;
+        }
+        100% {
+          margin-left: 100%;
+        }
+      }
+      .pinfo {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .motor {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+      .motor:hover {
+        color: var(--text);
+      }
+      .motor.ok {
+        color: #7dffc4;
+      }
+      .bubble .mini {
+        display: block;
+        margin: 8px auto 0;
+        padding: 6px 14px;
+        font-size: 13px;
+      }
+
+      .note {
+        margin-top: 14px;
+        font-size: 11.5px;
+        color: #a993c9;
+        line-height: 1.5;
+      }
+
+      /* Mascota */
+      .side {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      .bubble {
+        position: relative;
+        background: #fff;
+        color: #3b1f5c;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1.4;
+        padding: 12px 16px;
+        border-radius: 18px;
+        margin-bottom: 10px;
+        max-width: 250px;
+        text-align: center;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+        transition: transform 0.2s;
+      }
+      .bubble::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 10px solid transparent;
+        border-top-color: #fff;
+        border-bottom: 0;
+      }
+      .bubble.bump {
+        animation: bump 0.4s;
+      }
+      @keyframes bump {
+        40% {
+          transform: scale(1.06);
+        }
+      }
+      .mascot {
+        width: 250px;
+        animation: float 4s ease-in-out infinite;
+        filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.35));
+      }
+      @keyframes float {
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+      .mascot .blink {
+        animation: blink 4.5s infinite;
+        transform-origin: center;
+        transform-box: fill-box;
+      }
+      @keyframes blink {
+        0%,
+        94%,
+        100% {
+          transform: scaleY(1);
+        }
+        97% {
+          transform: scaleY(0.1);
+        }
+      }
+      .mascot.happy .eyes-open {
+        display: none;
+      }
+      .mascot:not(.happy) .eyes-happy {
+        display: none;
+      }
+      .name {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stars" id="stars"></div>
+
+    <div class="app">
+      <main>
+        <header>
+          <img class="app-icon" src="icon.png" alt="" />
+          <div class="logo">Estela</div>
+        </header>
+
+        <section class="card">
+          <div class="row">
+            <input
+              id="url"
+              type="text"
+              placeholder="Pega aquí el enlace de YouTube…"
+              spellcheck="false"
+            />
+            <button id="searchBtn">Buscar ✦</button>
+          </div>
+
+          <div class="preview" id="preview">
+            <img class="thumb" id="thumb" alt="" />
+            <div class="meta">
+              <div class="title" id="title"></div>
+              <div class="sub" id="channel"></div>
+              <div class="sub" id="extra"></div>
+              <div class="badge" id="license"></div>
+            </div>
+          </div>
+
+          <div class="formats" id="formats">
+            <div class="fmt active" data-kind="video">
+              <div class="ic">🎬</div>
+              <div class="nm">Video HD</div>
+              <div class="ds">Mejor calidad · MP4</div>
+            </div>
+            <div class="fmt" data-kind="video720">
+              <div class="ic">📺</div>
+              <div class="nm">Video 720p</div>
+              <div class="ds">Más ligero · MP4</div>
+            </div>
+            <div class="fmt" data-kind="audio">
+              <div class="ic">🎧</div>
+              <div class="nm">Solo audio</div>
+              <div class="ds">MP3 · 192 kbps</div>
+            </div>
+          </div>
+
+          <div class="folder">
+            📁 <span id="folder">…</span>
+            <button class="ghost" id="chooseBtn">Cambiar</button>
+            <button class="ghost" id="openBtn">Abrir</button>
+          </div>
+
+          <div class="dl-row">
+            <button id="downloadBtn" disabled>Descargar ♡</button>
+          </div>
+
+          <div class="progress" id="progress">
+            <div class="bar"><div class="fill" id="fill"></div></div>
+            <div class="pinfo">
+              <span id="pPercent">0%</span><span id="pSpeed"></span>
+            </div>
+          </div>
+
+          <p class="motor" id="motor" title="Buscar actualizaciones">
+            ⚙️ Motor de descargas: comprobando…
+          </p>
+        </section>
+      </main>
+
+      <aside class="side">
+        <div class="bubble" id="bubble">
+          ¡Hola! Soy Hoshi ☆<br />Pega un enlace y te ayudo a descargarlo.
+        </div>
+        <!-- Mascota original: Hoshi -->
+        <svg
+          class="mascot"
+          id="mascot"
+          viewBox="0 0 200 240"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#c9b2ff" />
+              <stop offset="1" stop-color="#8f6ce8" />
+            </linearGradient>
+            <linearGradient id="hood" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffb3d9" />
+              <stop offset="1" stop-color="#ff7fbf" />
+            </linearGradient>
+            <radialGradient id="eye" cx=".5" cy=".35" r=".7">
+              <stop offset="0" stop-color="#9ff3ff" />
+              <stop offset=".6" stop-color="#3fb4e0" />
+              <stop offset="1" stop-color="#1d5f9e" />
+            </radialGradient>
+          </defs>
+          <!-- cuerpo / sudadera -->
+          <path
+            d="M48 240 C48 196 70 178 100 178 C130 178 152 196 152 240 Z"
+            fill="url(#hood)"
+          />
+          <path
+            d="M88 182 L100 200 L112 182"
+            fill="none"
+            stroke="#fff"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+          <circle cx="100" cy="215" r="9" fill="#fff" opacity=".9" />
+          <path d="M96 211 L105 215 L96 219 Z" fill="#ff7fbf" />
+          <!-- cuello -->
+          <rect x="91" y="160" width="18" height="22" rx="8" fill="#ffe3d3" />
+          <!-- pelo trasero -->
+          <path
+            d="M38 96 C34 150 44 180 62 186 L138 186 C156 180 166 150 162 96 Z"
+            fill="url(#hair)"
+          />
+          <!-- cara -->
+          <ellipse cx="100" cy="112" rx="54" ry="56" fill="#ffeadf" />
+          <!-- ojos -->
+          <g class="eyes-open">
+            <g class="blink">
+              <ellipse cx="78" cy="120" rx="12" ry="16" fill="url(#eye)" />
+              <ellipse cx="122" cy="120" rx="12" ry="16" fill="url(#eye)" />
+              <ellipse cx="78" cy="122" rx="6" ry="9" fill="#123a66" />
+              <ellipse cx="122" cy="122" rx="6" ry="9" fill="#123a66" />
+              <circle cx="82" cy="113" r="4.5" fill="#fff" />
+              <circle cx="126" cy="113" r="4.5" fill="#fff" />
+              <circle cx="74" cy="128" r="2" fill="#fff" />
+              <circle cx="118" cy="128" r="2" fill="#fff" />
+            </g>
+            <path
+              d="M64 104 Q78 96 91 104"
+              fill="none"
+              stroke="#4a2d7a"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
+            <path
+              d="M109 104 Q122 96 136 104"
+              fill="none"
+              stroke="#4a2d7a"
+              stroke-width="3"
+              stroke-linecap="round"
+            />
+          </g>
+          <g
+            class="eyes-happy"
+            fill="none"
+            stroke="#4a2d7a"
+            stroke-width="4"
+            stroke-linecap="round"
+          >
+            <path d="M66 124 Q78 110 90 124" />
+            <path d="M110 124 Q122 110 134 124" />
+          </g>
+          <!-- mejillas y boca -->
+          <ellipse cx="66" cy="140" rx="9" ry="5" fill="#ff9fc8" opacity=".6" />
+          <ellipse
+            cx="134"
+            cy="140"
+            rx="9"
+            ry="5"
+            fill="#ff9fc8"
+            opacity=".6"
+          />
+          <path
+            d="M93 145 Q100 152 107 145"
+            fill="#ff7f9f"
+            stroke="#c4466b"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <!-- flequillo -->
+          <path
+            d="M44 104 C44 58 70 40 100 40 C130 40 156 58 156 104
+               C150 92 142 84 134 80 C136 92 132 100 126 104
+               C124 92 118 82 110 78 C108 90 102 98 94 102
+               C94 90 90 82 84 78 C80 90 72 98 62 100
+               C62 92 60 86 58 84 C52 90 46 98 44 104 Z"
+            fill="url(#hair)"
+          />
+          <!-- mechón -->
+          <path
+            d="M100 42 C96 26 104 16 114 14 C106 22 106 32 104 42 Z"
+            fill="#a98bf5"
+          />
+          <!-- auriculares con orejitas de gato -->
+          <path
+            d="M42 112 C36 50 164 50 158 112"
+            fill="none"
+            stroke="#3a2a5c"
+            stroke-width="7"
+            stroke-linecap="round"
+          />
+          <path d="M58 62 L52 30 L80 50 Z" fill="#3a2a5c" />
+          <path d="M60 56 L57 40 L71 50 Z" fill="#ff8fc7" />
+          <path d="M142 62 L148 30 L120 50 Z" fill="#3a2a5c" />
+          <path d="M140 56 L143 40 L129 50 Z" fill="#ff8fc7" />
+          <rect x="30" y="102" width="20" height="32" rx="9" fill="#3a2a5c" />
+          <rect x="150" y="102" width="20" height="32" rx="9" fill="#3a2a5c" />
+          <circle cx="40" cy="118" r="5" fill="#7fe7ff" />
+          <circle cx="160" cy="118" r="5" fill="#7fe7ff" />
+          <!-- horquilla de estrella -->
+          <path
+            d="M138 70 l4 8 9 1 -7 6 2 9 -8 -5 -8 5 2 -9 -7 -6 9 -1 Z"
+            fill="#ffe27a"
+            stroke="#f5b942"
+            stroke-width="1.5"
+          />
+        </svg>
+        <div class="name">Hoshi · tu asistente ☆</div>
+      </aside>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let kind = "video";
+      let ready = false;
+
+      // Fondo: estrellas y pétalos de sakura
+      for (let i = 0; i < 60; i++) {
+        const s = document.createElement("div");
+        s.className = "star";
+        s.style.left = Math.random() * 100 + "%";
+        s.style.top = Math.random() * 100 + "%";
+        s.style.animationDelay = Math.random() * 3 + "s";
+        $("stars").appendChild(s);
+      }
+      function spawnPetal() {
+        const p = document.createElement("div");
+        p.className = "petal";
+        p.style.left = Math.random() * 100 + "vw";
+        p.style.setProperty("--drift", Math.random() * 200 - 100 + "px");
+        p.style.setProperty("--spin", Math.random() * 720 + "deg");
+        p.style.animationDuration = 6 + Math.random() * 6 + "s";
+        document.body.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+      }
+      setInterval(spawnPetal, 700);
+
+      function say(text, happy = false) {
+        const b = $("bubble");
+        b.innerHTML = text;
+        b.classList.remove("bump");
+        void b.offsetWidth;
+        b.classList.add("bump");
+        $("mascot").classList.toggle("happy", happy);
+      }
+
+      function formatViews(n) {
+        if (!n) return "";
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + " M vistas";
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + " K vistas";
+        return n + " vistas";
+      }
+
+      async function search() {
+        const url = $("url").value.trim();
+        if (!url) {
+          say("Primero pega un enlace, ¿sí? (｡•́︿•̀｡)");
+          return;
+        }
+        $("searchBtn").disabled = true;
+        $("downloadBtn").disabled = true;
+        say("Buscando el video… 🔍");
+        const info = await pywebview.api.get_info(url);
+        $("searchBtn").disabled = false;
+        if (!info.ok) {
+          $("preview").classList.remove("show");
+          say(
+            "Ups, no encontré ese video (；へ：)<br><small>" +
+              info.error.slice(0, 120) +
+              "</small>",
+          );
+          return;
+        }
+        $("thumb").src = info.thumbnail || "";
+        $("title").textContent = info.title;
+        $("channel").textContent = info.channel || "";
+        $("extra").textContent = [info.duration, formatViews(info.views)]
+          .filter(Boolean)
+          .join(" · ");
+        const lic = $("license");
+        const isCC = info.license && /creative commons/i.test(info.license);
+        lic.className = "badge " + (isCC ? "cc" : "std");
+        lic.textContent = isCC
+          ? "✓ Creative Commons"
+          : "Licencia estándar de YouTube";
+        $("preview").classList.add("show");
+        $("downloadBtn").disabled = false;
+        say(
+          isCC
+            ? "¡Este video es Creative Commons! Puedes descargarlo sin problema ✨"
+            : "¡Lo encontré! Asegúrate de tener permiso para descargarlo ♪",
+          true,
+        );
+      }
+
+      async function download() {
+        const url = $("url").value.trim();
+        $("downloadBtn").disabled = true;
+        $("searchBtn").disabled = true;
+        $("progress").classList.add("show");
+        $("fill").style.width = "0";
+        $("fill").classList.remove("indeterminate");
+        $("pPercent").textContent = "0%";
+        $("pSpeed").textContent = "";
+        const r = await pywebview.api.download(url, kind);
+        if (!r.ok) {
+          say(r.error);
+          resetButtons();
+          return;
+        }
+        say("¡Descargando! Ganbatte~ (ง •̀_•́)ง");
+      }
+
+      function resetButtons() {
+        $("downloadBtn").disabled = false;
+        $("searchBtn").disabled = false;
+      }
+
+      window.onBackend = (event, data) => {
+        if (event === "progress") {
+          if (data.percent != null) {
+            $("fill").classList.remove("indeterminate");
+            $("fill").style.width = data.percent + "%";
+            $("pPercent").textContent = data.percent + "%";
+          } else {
+            $("fill").classList.add("indeterminate");
+          }
+          $("pSpeed").textContent = [
+            data.speed,
+            data.eta && "faltan " + data.eta,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+        } else if (event === "processing") {
+          $("fill").classList.add("indeterminate");
+          $("pPercent").textContent = "Procesando…";
+          $("pSpeed").textContent = "";
+          say("Casi listo, uniendo las piezas… ⚙️");
+        } else if (event === "done") {
+          $("fill").classList.remove("indeterminate");
+          $("fill").style.width = "100%";
+          $("pPercent").textContent = "¡Completado!";
+          say("¡Listo! Tu archivo ya está en la carpeta ✨🌸", true);
+          for (let i = 0; i < 25; i++) setTimeout(spawnPetal, i * 60);
+          resetButtons();
+        } else if (event === "error") {
+          $("fill").classList.remove("indeterminate");
+          $("pPercent").textContent = "Error";
+          say(
+            "Algo salió mal… (╥﹏╥)<br><small>" +
+              data.error.slice(0, 120) +
+              "</small>",
+          );
+          resetButtons();
+        }
+      };
+
+      document.querySelectorAll(".fmt").forEach((el) => {
+        el.addEventListener("click", () => {
+          document
+            .querySelectorAll(".fmt")
+            .forEach((f) => f.classList.remove("active"));
+          el.classList.add("active");
+          kind = el.dataset.kind;
+        });
+      });
+
+      $("searchBtn").addEventListener("click", search);
+      $("url").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") search();
+      });
+      $("downloadBtn").addEventListener("click", download);
+      $("chooseBtn").addEventListener("click", async () => {
+        $("folder").textContent = await pywebview.api.choose_folder();
+      });
+      $("openBtn").addEventListener("click", () => pywebview.api.open_folder());
+
+      // Actualización automática del motor de descargas (yt-dlp)
+      let checking = false;
+      async function checkUpdate(manual = false) {
+        if (checking) return;
+        checking = true;
+        const m = $("motor");
+        m.classList.remove("ok");
+        m.textContent =
+          "⚙️ Motor de descargas: buscando actualizaciones… (la primera vez puede tardar un poco)";
+        const r = await pywebview.api.check_update();
+        checking = false;
+        const denoText = {
+          ok: " · JS ✓",
+          installed: " · JS instalado ✓",
+          updated: " · JS actualizado ✓",
+          missing: " · JS pendiente",
+        }[r.deno];
+        if (r.status === "reinstall") {
+          m.textContent = `⚙️ Motor de descargas: v${r.version}${denoText} · hay una versión nueva de Estela`;
+          say(
+            "Salió una versión del motor que necesita un instalador nuevo de Estela 🛠️<br><small>Genera uno con crear_instalador.bat</small>",
+          );
+          return;
+        }
+        if (r.status === "updated") {
+          m.textContent = `⚙️ Motor de descargas: v${r.new} lista · reinicia para usarla${denoText}`;
+          say(
+            `¡Encontré una actualización del motor de descargas (v${r.new})! ✨<br>Así seguirás descargando aunque YouTube cambie algo.` +
+              `<button class="mini" onclick="restartApp()">Reiniciar ahora</button>`,
+            true,
+          );
+        } else if (r.status === "ok") {
+          m.classList.add("ok");
+          m.textContent = `⚙️ Motor de descargas: v${r.version} ✓ al día${denoText}`;
+          if (manual) say("¡Todo al día! No hay actualizaciones nuevas ☆", true);
+        } else {
+          m.textContent = `⚙️ Motor de descargas: v${r.version} · sin conexión para comprobar${denoText}`;
+          if (manual) say("No pude comprobar actualizaciones… ¿hay internet? (；へ：)");
+        }
+      }
+
+      async function restartApp() {
+        const r = await pywebview.api.restart();
+        if (!r.ok) say(r.error);
+      }
+
+      $("motor").addEventListener("click", () => checkUpdate(true));
+
+      window.addEventListener("pywebviewready", async () => {
+        ready = true;
+        $("folder").textContent = await pywebview.api.get_folder();
+        checkUpdate();
+      });
+    </script>
+  </body>
+</html>
