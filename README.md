@@ -5,8 +5,7 @@
 <h1 align="center">Estela ✦</h1>
 
 <p align="center">
-  Descargador de videos de YouTube con fines educativos para Windows,<br>
-  con Hoshi, tu asistente bajo un cielo de estrellas y pétalos de sakura.
+  Descargador de videos de YouTube con fines educativos para Windows
 </p>
 
 <p align="center">
